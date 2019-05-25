@@ -1,0 +1,75 @@
+service: celsus-lendings
+
+plugins:
+  - serverless-webpack
+  - serverless-domain-manager
+
+custom:
+  config: ${file(./infra.json)}
+  customDomain:
+    domainName: "api-celsus.isnan.eu"
+    certificateArn: ${self:custom.config.certificate}
+    hostedZoneId: ${self:custom.config.hostedZone}
+    basePath: "lendings"
+    stage: ${self:provider.stage}
+    createRoute53Record: true
+    endpointType: edge
+  webpack:
+    webpackConfig: "./build/webpack.base.config.js"
+    includeModules: true
+    packager: "npm"
+
+provider:
+  name: aws
+  runtime: nodejs10.x
+  versionFunctions: false
+  memorySize: 1024
+  region: ${self:custom.config.region}
+  stage: ${self:custom.config.environment}
+  endpointType: EDGE
+  profile: serverless-admin-profile
+  # >>> Enable Gzip compression on AWS APi Gateway
+  apiGateway:
+    minimumCompressionSize: 1024 # in bytes
+  # <<< Enable Gzip compression on AWS APi Gateway
+  # >>> Lambda has to live in VPC in order to access RDS
+  role: ${self:custom.config.lambdaExecutionRoleArn}
+  vpc:
+    securityGroupIds:
+      - ${self:custom.config.coreStorageSecurityGroup} # To access the RDS instance
+      - ${self:custom.config.mainVPCDefaultSecurityGroup} # To publish to SNS via the VPC Endpoint
+    subnetIds:
+      - ${self:custom.config.mainVPCSubnet2}
+  # <<< Lambda has to live in VPC in order to access RDS
+  environment:
+    PGUSER: ${ssm:core_storage_username_${self:provider.stage}~true}
+    PGPASSWORD: ${ssm:core_storage_password_${self:provider.stage}~true}
+    PGHOST: ${ssm:core_storage_hostname_${self:provider.stage}~true}
+    PGPORT: ${ssm:core_storage_port_${self:provider.stage}~true}
+    PGDATABASE: ${ssm:core_storage_database_${self:provider.stage}~true}
+    PGSCHEMA: ${ssm:core_storage_schema_${self:provider.stage}~true}
+    REGION: ${self:custom.config.region}
+    LOG_LEVEL: info
+
+package:
+  exclude:
+    - .env
+    - .vscode/**
+    - .travis.yml
+    - coverage/**
+    - test/**
+    - scripts/**
+    - run-local-postgres.sh
+    - secrets.txt
+
+functions:
+  postLending:
+    handler: src/handler.postLending
+    name: post-lending
+    events:
+      - http:
+          path: v1/lendings
+          method: post
+          cors: true
+          authorizer:
+            arn: ${self:custom.config.userPoolArn}
