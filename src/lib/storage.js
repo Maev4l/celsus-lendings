@@ -1,4 +1,4 @@
-import pgpromise, { ParameterizedQuery } from "pg-promise";
+import pgpromise, { ParameterizedQuery } from 'pg-promise';
 
 // Initialize pg-promise
 const pgp = pgpromise();
@@ -13,13 +13,13 @@ pgp.pg.types.setTypeParser(20 /* int8 */, val => parseInt(val, 10));
 const database = pgp({ capSQL: true });
 
 export const getDatabase = () => database;
-export const getDbSchemaName = () => process.env.PGSCHEMA || "celsus_lendings";
+export const getDbSchemaName = () => process.env.PGSCHEMA || 'celsus_lendings';
 
 export const saveLending = async (userId, lending) => {
   const { id, bookId, lenderId, lentAt } = library;
   const query = new ParameterizedQuery(
     `INSERT INTO "${schemaName}"."library" ("id", "user_id", "name", "description") VALUES ($1, $2, $3, $4);`,
-    [id, userId, name.trim(), description.trim()]
+    [id, userId, name.trim(), description.trim()],
   );
 
   await database.none(query);

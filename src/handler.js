@@ -1,17 +1,17 @@
-import * as LendingManager from "./lib/lending-manager";
+import * as LendingManager from './lib/lending-manager';
 
 const makeResponse = (statusCode, result) => {
-  let body = "";
+  let body = '';
   if (result) {
     body = JSON.stringify(result);
   }
   const response = {
     statusCode,
     headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Credentials": true
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Credentials': true,
     },
-    body
+    body,
   };
 
   return response;
@@ -20,7 +20,7 @@ const makeResponse = (statusCode, result) => {
 export const postLending = async event => {
   const lending = JSON.parse(event.body);
   const { sub } = event.requestContext.authorizer.claims;
-  let result = "";
+  let result = '';
   let statusCode;
 
   try {
