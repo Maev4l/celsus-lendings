@@ -4,13 +4,14 @@ import { logger } from './logger';
 import { OUTGOING_OPERATIONS } from './utils';
 
 const CORE_QUEUE = process.env.CORE_QUEUE_URL;
-const CONTACTS_QUEUE = process.env.CONTACTS_QUEUE_URL;
+// const CONTACTS_QUEUE = process.env.CONTACTS_QUEUE_URL;
 const LENDINGS_QUEUE = process.env.LENDINGS_QUEUE_URL;
 const REGION = process.env.region;
 
 AWS.config.update({ region: REGION });
 const sqs = new AWS.SQS({ sslEnabled: true, apiVersion: 'latest' });
 
+/*
 const sendMessage = async (message, destination) => {
   const request = sqs.sendMessage({
     QueueUrl: destination,
@@ -26,7 +27,7 @@ const sendMessage = async (message, destination) => {
     throw error;
   }
 };
-
+*/
 const sendMessageWithReply = async (message, destination) => {
   const request = sqs.sendMessage({
     QueueUrl: destination,
