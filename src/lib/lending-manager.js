@@ -1,7 +1,7 @@
 import uuidv4 from 'uuid/v4';
 
 import { logger } from './logger';
-import CelsusException from './exception';
+// import CelsusException from './exception';
 
 import { saveLending } from './storage';
 import messaging from './messaging';
@@ -29,4 +29,4 @@ export const handleLendBookValidationResult = async (lendId, status) => {
   logger.info(`Book Validation result: ${status} - lending: ${lendId}`);
 };
 
-export const handleBookBorrowerValidationResult = async (lendId, status) => {};
+// export const handleBookBorrowerValidationResult = async (lendId, status) => {};

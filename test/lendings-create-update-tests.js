@@ -49,7 +49,7 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
     assert.strictEqual(rows.length, 1);
     const lend = rows[0];
 
-    const { userId, bookId, borrowerId, lentAt, returnedAt } = lend;
+    const { userId, bookId, borrowerId, /* lentAt, */ returnedAt } = lend;
     assert.strictEqual(userId, expectedUserId);
     assert.strictEqual(bookId, expectedBookId);
     assert.strictEqual(borrowerId, expectedBorrowerId);
