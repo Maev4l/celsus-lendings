@@ -15,11 +15,14 @@ const database = pgp({ capSQL: true });
 export const getDatabase = () => database;
 export const getDbSchemaName = () => process.env.PGSCHEMA || 'celsus_lendings';
 
+const schemaName = getDbSchemaName();
+
 export const saveLending = async (userId, lending, status) => {
-  /* const query = new ParameterizedQuery(
-    `INSERT INTO "${schemaName}"."library" ("id", "user_id", "name", "description") VALUES ($1, $2, $3, $4);`,
-    [id, userId, name.trim(), description.trim()],
+  const { id, bookId, contactId } = lending;
+  const query = new ParameterizedQuery(
+    `INSERT INTO "${schemaName}"."lending" ("id", "user_id", "book_id", "borrower_id", "status") VALUES ($1, $2, $3, $4, $5);`,
+    [id, userId, bookId, contactId, status],
   );
 
-  await database.none(query); */
+  await database.none(query);
 };

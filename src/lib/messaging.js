@@ -49,17 +49,31 @@ const sendMessageWithReply = async (message, destination) => {
   }
 };
 
-export const validateBook = async (lendingId, userId, bookId) => {
-  logger.info(`Request book validation - lending: ${lendingId}`);
-  await sendMessageWithReply(
-    {
-      operation: OUTGOING_OPERATIONS.VALIDATE_LEND_BOOK,
-      lendingId,
-      userId,
-      bookId,
-    },
-    CORE_QUEUE,
-  );
+const messaging = {
+  validateBook: async (lendingId, userId, bookId) => {
+    logger.info(`Request book validation - lending: ${lendingId}`);
+    await sendMessageWithReply(
+      {
+        operation: OUTGOING_OPERATIONS.VALIDATE_LEND_BOOK,
+        lendingId,
+        userId,
+        bookId,
+      },
+      CORE_QUEUE,
+    );
+  },
+  validateBorrower: async (lendingId, userId, contactId) => {
+    logger.info(`Request book validation - lending: ${lendingId}`);
+    await sendMessageWithReply(
+      {
+        operation: OUTGOING_OPERATIONS.VALIDATE_BOOK_BORROWER,
+        lendingId,
+        userId,
+        contactId,
+      },
+      CORE_QUEUE,
+    );
+  },
 };
 
-export const validateBorrower = async (lendingId, userId, contactId) => {};
+export default messaging;

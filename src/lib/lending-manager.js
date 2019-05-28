@@ -4,7 +4,7 @@ import { logger } from './logger';
 import CelsusException from './exception';
 
 import { saveLending } from './storage';
-import { validateBook, validateBorrower } from './messaging';
+import messaging from './messaging';
 
 import { LENDING_STATUS } from './utils';
 
@@ -18,10 +18,10 @@ export const lendBook = async (userId, lending) => {
   const { bookId, contactId } = lending;
 
   const id = uuidv4();
-  // await saveLending(userId, { ...lending, id }, LENDING_STATUS.PENDING);
+  await saveLending(userId, { ...lending, id }, LENDING_STATUS.PENDING);
   logger.info(`Validating book: ${bookId} - lending: ${id}`);
-  await validateBook(id, userId, bookId);
-  // await validateBorrower(id, userId, contactId);
+  await messaging.validateBook(id, userId, bookId);
+  await messaging.validateBorrower(id, userId, contactId);
   return { id };
 };
 
