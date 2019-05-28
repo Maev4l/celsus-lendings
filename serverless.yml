@@ -76,3 +76,10 @@ functions:
           cors: true
           authorizer:
             arn: ${self:custom.config.userPoolArn}
+  handleMessages:
+    handler: src/handler.handleMessages
+    name: handle-lendings-messages
+    events:
+      - sqs:
+          arn: ${self:custom.config.lendingsQueueArn}
+          batchSize: 1

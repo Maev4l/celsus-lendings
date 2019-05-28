@@ -1,4 +1,6 @@
 import * as LendingManager from './lib/lending-manager';
+import { logger } from './lib/logger';
+import dispatch from './lib/dispatcher';
 
 const makeResponse = (statusCode, result) => {
   let body = '';
@@ -26,10 +28,34 @@ export const postLending = async event => {
   try {
     result = await LendingManager.lendBook(sub, lending);
     statusCode = 201;
-  } catch (e) {
+  } catch (error) {
     statusCode = 400;
-    const { message } = e;
+    const { message } = error;
     result = { message };
   }
   return makeResponse(statusCode, result);
+};
+
+/**
+ * Handle messages from SQS
+ * @param {*} event
+ */
+export const handleMessages = async event => {
+  const { Records } = event;
+
+  // FIXME: At the current stage, by design, only process 1 event at a time
+  const record = Records[0];
+  const { messageId, body, messageAttributes } = record;
+  let replyAddress = null;
+
+  if (messageAttributes.replyAddress) {
+    replyAddress = messageAttributes.replyAddress.stringValue;
+  }
+
+  const payload = JSON.parse(body);
+
+  logger.info(`Message received: ${messageId}`);
+
+  const { operation, ...rest } = payload;
+  await dispatch(operation, rest, replyAddress);
 };
