@@ -2,14 +2,23 @@ import { assert } from 'chai';
 import dotenv from 'dotenv';
 import sinon from 'sinon';
 
-import { newMockEvent } from './utils';
-import { postLending } from '../src/handler';
+import { newMockEvent, newMockMessage } from './utils';
+import { postLending, handleMessages } from '../src/handler';
 import { getDatabase } from '../src/lib/storage';
-import messaging from '../src/lib/messaging';
+import sqs from '../src/lib/sqs';
+import {
+  INCOMING_OPERATIONS,
+  OUTGOING_OPERATIONS,
+  LEND_BOOK_VALIDATION_STATUS,
+  LENDING_STATUS,
+} from '../src/lib/utils';
 
 dotenv.config();
 const schemaName = process.env.PGSCHEMA;
 const database = getDatabase();
+
+const CORE_QUEUE = process.env.CORE_QUEUE_URL;
+const CONTACTS_QUEUE = process.env.CONTACTS_QUEUE_URL;
 
 describe('Lendings Test (CREATE-UPDATE)', async () => {
   let sinonSandbox;
@@ -51,8 +60,8 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
     const expectedLend = { bookId: '1', contactId: '1' };
     const { bookId: expectedBookId, contactId: expectedBorrowerId } = expectedLend;
 
-    const stubValidateBook = sinonSandbox.stub(messaging, 'validateBook');
-    const stubValidateBorrower = sinonSandbox.stub(messaging, 'validateBorrower');
+    const stubSendMessage = sinonSandbox.stub(sqs, 'sendMessageWithReply');
+
     const event = newMockEvent(expectedUserId, expectedLend);
     const response = await postLending(event);
 
@@ -63,11 +72,17 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
     assert.exists(id);
     assert.notEqual(id, '');
 
-    sinon.assert.calledWith(stubValidateBook, id, expectedUserId, expectedBookId);
-    sinon.assert.calledOnce(stubValidateBook);
-
-    sinon.assert.calledWith(stubValidateBorrower, id, expectedUserId, expectedBorrowerId);
-    sinon.assert.calledOnce(stubValidateBorrower);
+    sinon.assert.calledWith(
+      stubSendMessage,
+      {
+        operation: OUTGOING_OPERATIONS.VALIDATE_LEND_BOOK,
+        lendingId: id,
+        userId: expectedUserId,
+        bookId: expectedBookId,
+      },
+      CORE_QUEUE,
+    );
+    sinon.assert.calledOnce(stubSendMessage);
 
     const rows = await database.any(
       `SELECT "id", "user_id" as "userId", "book_id" as "bookId", "borrower_id" as "borrowerId", "lent_at" as "lentAt", "returned_at" as "returnedAt" FROM "${schemaName}"."lending" WHERE "id"=$1;`,
@@ -89,5 +104,71 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
     assert.isNull(returnedAt);
 
     await database.none(`DELETE FROM "${schemaName}"."lending" WHERE "id"=$1`, [id]);
+  });
+
+  it('Handles a successful book validation', async () => {
+    const lendingId = '1';
+    const userId = 'user1';
+    const bookId = 'book1';
+    const contactId = 'contact1';
+
+    const mockMessage = newMockMessage({
+      operation: INCOMING_OPERATIONS.VALIDATE_LEND_BOOK,
+      lendingId,
+      userId,
+      bookId,
+      status: LEND_BOOK_VALIDATION_STATUS.BOOK_VALIDATED,
+    });
+
+    const stubSendMessage = sinonSandbox.stub(sqs, 'sendMessageWithReply');
+    await handleMessages(mockMessage);
+    sinon.assert.calledWith(
+      stubSendMessage,
+      {
+        operation: OUTGOING_OPERATIONS.VALIDATE_BOOK_BORROWER,
+        lendingId,
+        userId,
+        contactId,
+      },
+      CONTACTS_QUEUE,
+    );
+    sinon.assert.calledOnce(stubSendMessage);
+
+    const lending = await database.one(
+      `SELECT "id", "status" FROM "${schemaName}"."lending" WHERE "id"=$1;`,
+      [lendingId],
+    );
+
+    const { status } = lending;
+    assert.strictEqual(status, LENDING_STATUS.BOOK_VALIDATED);
+  });
+
+  it('Handles a failed book validation', async () => {
+    const lendingId = '1';
+    const userId = 'user1';
+    const bookId = 'book2';
+
+    const mockMessage = newMockMessage({
+      operation: INCOMING_OPERATIONS.VALIDATE_LEND_BOOK,
+      lendingId,
+      userId,
+      bookId,
+      status: LEND_BOOK_VALIDATION_STATUS.BOOK_NOT_VALIDATED,
+    });
+
+    const stubSendMessage = sinonSandbox.stub(sqs, 'sendMessage');
+
+    await handleMessages(mockMessage);
+
+    // Lending has been removed
+    const lending = await database.oneOrNone(
+      `SELECT "id", "status" FROM "${schemaName}"."lending" WHERE "id"=$1;`,
+      [lendingId],
+    );
+    assert.isNull(lending);
+
+    // No need to call back core services, to cancel the book lending
+    // as core services did not updated the lending status of the book
+    sinon.assert.notCalled(stubSendMessage);
   });
 });

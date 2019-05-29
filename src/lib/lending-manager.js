@@ -4,10 +4,10 @@ import Joi from 'joi';
 import { logger } from './logger';
 import CelsusException from './exception';
 import { lendingSchema as schema } from './schemas';
-import { saveLending } from './storage';
+import { saveLending, readLending, modifyLendingStatus, removeLending } from './storage';
 import messaging from './messaging';
 
-import { LENDING_STATUS } from './utils';
+import { LENDING_STATUS, LEND_BOOK_VALIDATION_STATUS } from './utils';
 
 export const lendBook = async (userId, lending) => {
   const { error } = Joi.validate(lending, schema);
@@ -16,18 +16,33 @@ export const lendBook = async (userId, lending) => {
     throw new CelsusException(message);
   }
 
-  const { bookId, contactId } = lending;
+  const { bookId } = lending;
 
   const id = uuidv4();
   await saveLending(userId, { ...lending, id }, LENDING_STATUS.PENDING);
   logger.info(`Validating book: ${bookId} - lending: ${id}`);
   await messaging.validateBook(id, userId, bookId);
-  await messaging.validateBorrower(id, userId, contactId);
+
   return { id };
 };
 
-export const handleLendBookValidationResult = async (lendId, status) => {
-  logger.info(`Book Validation result: ${status} - lending: ${lendId}`);
+export const handleLendBookValidationResult = async validationResult => {
+  const { lendingId, userId, status } = validationResult;
+  logger.info(`Book Validation result: ${status} - lending: ${lendingId} - status: ${status}`);
+
+  if (status === LEND_BOOK_VALIDATION_STATUS.BOOK_VALIDATED) {
+    // If the book has been validated, request a borrower validation
+    // and update the lending status accordingly
+    const lending = await readLending(userId, lendingId);
+    if (lending) {
+      const { borrowerId } = lending;
+      await modifyLendingStatus(userId, lendingId, LENDING_STATUS.BOOK_VALIDATED);
+      await messaging.validateBorrower(lendingId, userId, borrowerId);
+    }
+  } else {
+    // If the book has NOT been validated remove the lending
+    await removeLending(userId, lendingId);
+  }
 };
 
 // export const handleBookBorrowerValidationResult = async (lendId, status) => {};

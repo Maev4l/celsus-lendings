@@ -13,3 +13,8 @@ WITH (
     OIDS = FALSE
 )
 TABLESPACE pg_default;
+
+-- Test for PENDING lend book transaction with SUCCESSFUL book validation
+INSERT INTO "lending" ("id", "user_id", "book_id", "borrower_id", "status") VALUES ('1', 'user1', 'book1', 'contact1','PENDING');
+-- Test for PENDING lend book transaction with SUCCESSFUL book validation
+INSERT INTO "lending" ("id", "user_id", "book_id", "borrower_id", "status") VALUES ('2', 'user1', 'book2', 'contact1','PENDING');
