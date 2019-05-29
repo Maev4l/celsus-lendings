@@ -29,7 +29,7 @@ export const saveLending = async (userId, lending, status) => {
 
 export const readLending = async (userId, lendingId) => {
   const query = new ParameterizedQuery(
-    `SELECT "id", "borrower_id" as "borrowerId", "status" FROM "${schemaName}"."lending" WHERE id=$1 AND user_id=$2`,
+    `SELECT "id", "borrower_id" as "borrowerId", "book_id" as "bookId", "lent_at" as "lentAt", "returned_at" as "returnedAt", "status" FROM "${schemaName}"."lending" WHERE id=$1 AND user_id=$2`,
     [lendingId, userId],
   );
 
