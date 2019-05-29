@@ -1,19 +1,20 @@
 import uuidv4 from 'uuid/v4';
+import Joi from 'joi';
 
 import { logger } from './logger';
-// import CelsusException from './exception';
-
+import CelsusException from './exception';
+import { lendingSchema as schema } from './schemas';
 import { saveLending } from './storage';
 import messaging from './messaging';
 
 import { LENDING_STATUS } from './utils';
 
 export const lendBook = async (userId, lending) => {
-  /* TODO: const { error } = Joi.validate(lending, schema);
+  const { error } = Joi.validate(lending, schema);
   if (error) {
     const { message } = error.details[0];
     throw new CelsusException(message);
-  } */
+  }
 
   const { bookId, contactId } = lending;
 

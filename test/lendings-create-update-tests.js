@@ -18,6 +18,34 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
   });
   afterEach(async () => sinonSandbox.restore());
 
+  it('Fails when lend book with no borrower', async () => {
+    const event = newMockEvent('user1', { bookId: '1' });
+    const response = await postLending(event);
+    const { statusCode } = response;
+    assert.strictEqual(statusCode, 400);
+  });
+
+  it('Fails when lend book with empty borrower', async () => {
+    const event = newMockEvent('user1', { contactId: '', bookId: '1' });
+    const response = await postLending(event);
+    const { statusCode } = response;
+    assert.strictEqual(statusCode, 400);
+  });
+
+  it('Fails when lend book with no book', async () => {
+    const event = newMockEvent('user1', { contactId: '1' });
+    const response = await postLending(event);
+    const { statusCode } = response;
+    assert.strictEqual(statusCode, 400);
+  });
+
+  it('Fails when lend book with empty borrower', async () => {
+    const event = newMockEvent('user1', { contactId: '1', bookId: '' });
+    const response = await postLending(event);
+    const { statusCode } = response;
+    assert.strictEqual(statusCode, 400);
+  });
+
   it('Starts a lend book transaction for user1', async () => {
     const expectedUserId = 'user1';
     const expectedLend = { bookId: '1', contactId: '1' };
