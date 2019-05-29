@@ -23,3 +23,9 @@ INSERT INTO "lending" ("id", "user_id", "book_id", "borrower_id", "status") VALU
 INSERT INTO "lending" ("id", "user_id", "book_id", "borrower_id", "status") VALUES ('3', 'user1', 'book3', 'contact1','BOOK_VALIDATED');
 -- Test for BOOK_VALIDATED lend book transaction with FAILED borrower validation
 INSERT INTO "lending" ("id", "user_id", "book_id", "borrower_id", "status") VALUES ('4', 'user1', 'book4', 'contact1','BOOK_VALIDATED');
+
+-- Test for lending an already lent book
+INSERT INTO "lending" ("id", "user_id", "book_id", "borrower_id", "status") VALUES ('5', 'user1', 'book5', 'contact1','BOOK_VALIDATED');
+
+-- Test for lending a returned lent book
+INSERT INTO "lending" ("id", "user_id", "book_id", "borrower_id", "status", "returned_at") VALUES ('6', 'user1', 'book6', 'contact1','CONFIRMED', '2019/05/01');

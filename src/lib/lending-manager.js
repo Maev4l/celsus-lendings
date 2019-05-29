@@ -4,7 +4,13 @@ import Joi from 'joi';
 import { logger } from './logger';
 import CelsusException from './exception';
 import { lendingSchema as schema } from './schemas';
-import { saveLending, readLending, modifyLendingStatus, removeLending } from './storage';
+import {
+  saveLending,
+  readLending,
+  modifyLendingStatus,
+  removeLending,
+  checkLentBook,
+} from './storage';
 import messaging from './messaging';
 
 import { LENDING_STATUS, LEND_BOOK_VALIDATION_STATUS } from './utils';
@@ -18,6 +24,11 @@ export const lendBook = async (userId, lending) => {
 
   const { bookId } = lending;
 
+  const existingLending = await checkLentBook(userId, bookId);
+  if (existingLending) {
+    logger.error(`Book already lent - id ${bookId}`);
+    throw new CelsusException(`Book already lent`);
+  }
   const id = uuidv4();
   await saveLending(userId, { ...lending, id }, LENDING_STATUS.PENDING);
   logger.info(`Validating book: ${bookId} - lending: ${id}`);

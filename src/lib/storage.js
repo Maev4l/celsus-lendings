@@ -37,6 +37,22 @@ export const readLending = async (userId, lendingId) => {
   return row;
 };
 
+/**
+ * Check if a book is already lent in the local database
+ * Meaning the returned_at date is not set
+ * @param {*} userId
+ * @param {*} bookId
+ */
+export const checkLentBook = async (userId, bookId) => {
+  const query = new ParameterizedQuery(
+    `SELECT "id" FROM "${schemaName}"."lending" WHERE user_id=$1 AND book_id=$2 AND returned_at IS NULL`,
+    [userId, bookId],
+  );
+
+  const row = await database.oneOrNone(query);
+  return row;
+};
+
 export const modifyLendingStatus = async (userId, lendingId, status) => {
   const query = new ParameterizedQuery(
     `UPDATE "${schemaName}"."lending" SET "status"=$1 WHERE id=$2 AND user_id=$3`,

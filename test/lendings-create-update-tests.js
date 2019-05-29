@@ -242,4 +242,33 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
 
     assert.isNull(lending);
   });
+
+  it('Fails when lending an already lent book', async () => {
+    const event = newMockEvent('user1', { bookId: 'book5', contactId: 'contact1' });
+    const response = await postLending(event);
+
+    const { statusCode } = response;
+    assert.strictEqual(statusCode, 400);
+  });
+
+  it('Starts a lend book transaction for a returned book', async () => {
+    sinonSandbox.stub(sqs, 'sendMessageWithReply');
+
+    const event = newMockEvent('user1', { bookId: 'book6', contactId: 'contact1' });
+    const response = await postLending(event);
+
+    const { statusCode, body } = response;
+    assert.strictEqual(statusCode, 201);
+
+    const { id } = JSON.parse(body);
+    assert.exists(id);
+    assert.notEqual(id, '');
+
+    const rows = await database.any(
+      `SELECT "id", "user_id" as "userId", "book_id" as "bookId", "borrower_id" as "borrowerId", "lent_at" as "lentAt", "returned_at" as "returnedAt" FROM "${schemaName}"."lending" WHERE "id"=$1;`,
+      [id],
+    );
+
+    assert.strictEqual(rows.length, 1);
+  });
 });
