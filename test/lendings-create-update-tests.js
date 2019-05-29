@@ -77,10 +77,15 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
     assert.strictEqual(rows.length, 1);
     const lend = rows[0];
 
-    const { userId, bookId, borrowerId, /* lentAt, */ returnedAt } = lend;
+    const { userId, bookId, borrowerId, lentAt, returnedAt } = lend;
     assert.strictEqual(userId, expectedUserId);
     assert.strictEqual(bookId, expectedBookId);
     assert.strictEqual(borrowerId, expectedBorrowerId);
+    assert.isNotNull(lentAt);
+    const now = new Date();
+    assert.strictEqual(lentAt.getFullYear(), now.getFullYear());
+    assert.strictEqual(lentAt.getMonth(), now.getMonth());
+    assert.strictEqual(lentAt.getDate(), now.getDate());
     assert.isNull(returnedAt);
 
     await database.none(`DELETE FROM "${schemaName}"."lending" WHERE "id"=$1`, [id]);
