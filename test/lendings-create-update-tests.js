@@ -22,8 +22,13 @@ const CONTACTS_QUEUE = process.env.CONTACTS_QUEUE_URL;
 
 describe('Lendings Test (CREATE-UPDATE)', async () => {
   let sinonSandbox;
+  let stubSendMessageWithReply;
+  let stubSendMessage;
+
   beforeEach(async () => {
     sinonSandbox = sinon.createSandbox();
+    stubSendMessageWithReply = sinonSandbox.stub(sqs, 'sendMessageWithReply');
+    stubSendMessage = sinonSandbox.stub(sqs, 'sendMessage');
   });
   afterEach(async () => sinonSandbox.restore());
 
@@ -60,8 +65,6 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
     const expectedLend = { bookId: '1', contactId: '1' };
     const { bookId: expectedBookId, contactId: expectedBorrowerId } = expectedLend;
 
-    const stubSendMessage = sinonSandbox.stub(sqs, 'sendMessageWithReply');
-
     const event = newMockEvent(expectedUserId, expectedLend);
     const response = await postLending(event);
 
@@ -73,7 +76,7 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
     assert.notEqual(id, '');
 
     sinon.assert.calledWith(
-      stubSendMessage,
+      stubSendMessageWithReply,
       {
         operation: OUTGOING_OPERATIONS.VALIDATE_LEND_BOOK,
         lendingId: id,
@@ -82,7 +85,7 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
       },
       CORE_QUEUE,
     );
-    sinon.assert.calledOnce(stubSendMessage);
+    sinon.assert.calledOnce(stubSendMessageWithReply);
 
     const rows = await database.any(
       `SELECT "id", "user_id" as "userId", "book_id" as "bookId", "borrower_id" as "borrowerId", "lent_at" as "lentAt", "returned_at" as "returnedAt" FROM "${schemaName}"."lending" WHERE "id"=$1;`,
@@ -120,10 +123,9 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
       status: LEND_BOOK_VALIDATION_STATUS.BOOK_VALIDATED,
     });
 
-    const stubSendMessage = sinonSandbox.stub(sqs, 'sendMessageWithReply');
     await handleMessages(mockMessage);
     sinon.assert.calledWith(
-      stubSendMessage,
+      stubSendMessageWithReply,
       {
         operation: OUTGOING_OPERATIONS.VALIDATE_BOOK_BORROWER,
         lendingId,
@@ -132,7 +134,7 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
       },
       CONTACTS_QUEUE,
     );
-    sinon.assert.calledOnce(stubSendMessage);
+    sinon.assert.calledOnce(stubSendMessageWithReply);
 
     const lending = await database.one(
       `SELECT "id", "status" FROM "${schemaName}"."lending" WHERE "id"=$1;`,
@@ -155,8 +157,6 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
       bookId,
       status: LEND_BOOK_VALIDATION_STATUS.BOOK_NOT_VALIDATED,
     });
-
-    const stubSendMessage = sinonSandbox.stub(sqs, 'sendMessage');
 
     await handleMessages(mockMessage);
 
@@ -185,7 +185,6 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
       status: LEND_BOOK_VALIDATION_STATUS.BORROWER_VALIDATED,
     });
 
-    const stubSendMessage = sinonSandbox.stub(sqs, 'sendMessage');
     await handleMessages(mockMessage);
     sinon.assert.calledWith(
       stubSendMessage,
@@ -221,7 +220,6 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
       status: LEND_BOOK_VALIDATION_STATUS.BORROWER_NOT_VALIDATED,
     });
 
-    const stubSendMessage = sinonSandbox.stub(sqs, 'sendMessage');
     await handleMessages(mockMessage);
     sinon.assert.calledWith(
       stubSendMessage,
@@ -252,8 +250,6 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
   });
 
   it('Starts a lend book transaction for a returned book', async () => {
-    sinonSandbox.stub(sqs, 'sendMessageWithReply');
-
     const event = newMockEvent('user1', { bookId: 'book6', contactId: 'contact1' });
     const response = await postLending(event);
 
