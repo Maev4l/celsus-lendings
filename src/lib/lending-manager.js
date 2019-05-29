@@ -45,4 +45,23 @@ export const handleLendBookValidationResult = async validationResult => {
   }
 };
 
-// export const handleBookBorrowerValidationResult = async (lendId, status) => {};
+export const handleBookBorrowerValidationResult = async validationResult => {
+  const { lendingId, userId, bookId, status } = validationResult;
+  logger.info(`Book Validation result: ${status} - lending: ${lendingId} - status: ${status}`);
+  if (status === LEND_BOOK_VALIDATION_STATUS.BORROWER_VALIDATED) {
+    // The borrower has been validated
+    // - update the status lending status accordingly
+    // - send a message to update the book lending status
+    const lending = await readLending(userId, lendingId);
+    if (lending) {
+      await modifyLendingStatus(userId, lendingId, LENDING_STATUS.CONFIRMED);
+      await messaging.confirmBookLending(lendingId, userId, bookId);
+    }
+  } else {
+    // The borrower has not been validated
+    // - remove the lending
+    // - send a message to update the book lending status
+    await removeLending(userId, lendingId);
+    await messaging.cancelBookLending(lendingId, userId, bookId);
+  }
+};

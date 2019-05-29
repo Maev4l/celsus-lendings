@@ -6,26 +6,12 @@ const CORE_QUEUE = process.env.CORE_QUEUE_URL;
 const CONTACTS_QUEUE = process.env.CONTACTS_QUEUE_URL;
 
 /*
-const sendMessage = async (message, destination) => {
-  const request = sqs.sendMessage({
-    QueueUrl: destination,
-    MessageBody: JSON.stringify(message),
-  });
-
-  try {
-    const { MessageId } = await request.promise();
-    logger.info(`Message sent: ${MessageId}`);
-    return MessageId;
-  } catch (error) {
-    logger.error(`Fail to send message: ${error.message}`);
-    throw error;
-  }
-};
+const sendMessage = ;
 */
 
 const messaging = {
   validateBook: async (lendingId, userId, bookId) => {
-    logger.info(`Request book validation - lending: ${lendingId}`);
+    logger.info(`Request book validation - lending: ${lendingId} - book: ${bookId}`);
     await sqs.sendMessageWithReply(
       {
         operation: OUTGOING_OPERATIONS.VALIDATE_LEND_BOOK,
@@ -37,7 +23,7 @@ const messaging = {
     );
   },
   validateBorrower: async (lendingId, userId, contactId) => {
-    logger.info(`Request borrower validation - lending: ${lendingId}`);
+    logger.info(`Request borrower validation - lending: ${lendingId} - borrower: ${contactId}`);
     await sqs.sendMessageWithReply(
       {
         operation: OUTGOING_OPERATIONS.VALIDATE_BOOK_BORROWER,
@@ -48,7 +34,30 @@ const messaging = {
       CONTACTS_QUEUE,
     );
   },
-  cancelLending: async () => {},
+  confirmBookLending: async (lendingId, userId, bookId) => {
+    logger.info(`Confirm book lending - lending: ${lendingId} - book: ${bookId}`);
+    await sqs.sendMessage(
+      {
+        operation: OUTGOING_OPERATIONS.CONFIRM_LEND_BOOK,
+        lendingId,
+        userId,
+        bookId,
+      },
+      CORE_QUEUE,
+    );
+  },
+  cancelBookLending: async (lendingId, userId, bookId) => {
+    logger.info(`Cancel book lending - lending: ${lendingId} - book: ${bookId}`);
+    await sqs.sendMessage(
+      {
+        operation: OUTGOING_OPERATIONS.CANCEL_LEND_BOOK,
+        lendingId,
+        userId,
+        bookId,
+      },
+      CORE_QUEUE,
+    );
+  },
 };
 
 export default messaging;

@@ -11,6 +11,10 @@ registry.set(INCOMING_OPERATIONS.VALIDATE_LEND_BOOK, async payload => {
   await LendingManager.handleLendBookValidationResult(payload);
 });
 
+registry.set(INCOMING_OPERATIONS.VALIDATE_BOOK_BORROWER, async payload => {
+  await LendingManager.handleBookBorrowerValidationResult(payload);
+});
+
 export default async (operation, payload, replyAddress) => {
   const func = registry.get(operation);
   if (!func) {

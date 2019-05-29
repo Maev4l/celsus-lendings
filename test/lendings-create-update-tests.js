@@ -144,7 +144,7 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
   });
 
   it('Handles a failed book validation', async () => {
-    const lendingId = '1';
+    const lendingId = '2';
     const userId = 'user1';
     const bookId = 'book2';
 
@@ -170,5 +170,76 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
     // No need to call back core services, to cancel the book lending
     // as core services did not updated the lending status of the book
     sinon.assert.notCalled(stubSendMessage);
+  });
+
+  it('Handles a successful borrower validation', async () => {
+    const lendingId = '3';
+    const userId = 'user1';
+    const bookId = 'book3';
+
+    const mockMessage = newMockMessage({
+      operation: INCOMING_OPERATIONS.VALIDATE_BOOK_BORROWER,
+      lendingId,
+      userId,
+      bookId,
+      status: LEND_BOOK_VALIDATION_STATUS.BORROWER_VALIDATED,
+    });
+
+    const stubSendMessage = sinonSandbox.stub(sqs, 'sendMessage');
+    await handleMessages(mockMessage);
+    sinon.assert.calledWith(
+      stubSendMessage,
+      {
+        operation: OUTGOING_OPERATIONS.CONFIRM_LEND_BOOK,
+        lendingId,
+        userId,
+        bookId,
+      },
+      CORE_QUEUE,
+    );
+    sinon.assert.calledOnce(stubSendMessage);
+
+    const lending = await database.one(
+      `SELECT "id", "status" FROM "${schemaName}"."lending" WHERE "id"=$1;`,
+      [lendingId],
+    );
+
+    const { status } = lending;
+    assert.strictEqual(status, LENDING_STATUS.CONFIRMED);
+  });
+
+  it('Handles a failed borrower validation', async () => {
+    const lendingId = '4';
+    const userId = 'user1';
+    const bookId = 'book3';
+
+    const mockMessage = newMockMessage({
+      operation: INCOMING_OPERATIONS.VALIDATE_BOOK_BORROWER,
+      lendingId,
+      userId,
+      bookId,
+      status: LEND_BOOK_VALIDATION_STATUS.BORROWER_NOT_VALIDATED,
+    });
+
+    const stubSendMessage = sinonSandbox.stub(sqs, 'sendMessage');
+    await handleMessages(mockMessage);
+    sinon.assert.calledWith(
+      stubSendMessage,
+      {
+        operation: OUTGOING_OPERATIONS.CANCEL_LEND_BOOK,
+        lendingId,
+        userId,
+        bookId,
+      },
+      CORE_QUEUE,
+    );
+    sinon.assert.calledOnce(stubSendMessage);
+
+    const lending = await database.oneOrNone(
+      `SELECT "id", "status" FROM "${schemaName}"."lending" WHERE "id"=$1;`,
+      [lendingId],
+    );
+
+    assert.isNull(lending);
   });
 });
