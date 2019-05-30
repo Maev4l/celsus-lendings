@@ -210,7 +210,7 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
   it('Handles a failed borrower validation', async () => {
     const lendingId = '4';
     const userId = 'user1';
-    const bookId = 'book3';
+    const bookId = 'book4';
 
     const mockMessage = newMockMessage({
       operation: INCOMING_OPERATIONS.VALIDATE_BOOK_BORROWER,

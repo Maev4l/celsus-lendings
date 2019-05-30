@@ -1,5 +1,7 @@
 import pgpromise, { ParameterizedQuery } from 'pg-promise';
 
+import { LENDING_STATUS } from './utils';
+
 // Initialize pg-promise
 const pgp = pgpromise();
 
@@ -45,7 +47,8 @@ export const readLending = async (userId, lendingId) => {
  */
 export const checkLentBook = async (userId, bookId) => {
   const query = new ParameterizedQuery(
-    `SELECT "id" FROM "${schemaName}"."lending" WHERE user_id=$1 AND book_id=$2 AND returned_at IS NULL`,
+    `SELECT "id" FROM "${schemaName}"."lending"
+    WHERE user_id=$1 AND book_id=$2 AND returned_at IS NULL`,
     [userId, bookId],
   );
 
@@ -53,20 +56,37 @@ export const checkLentBook = async (userId, bookId) => {
   return row;
 };
 
-export const modifyLendingStatus = async (userId, lendingId, status) => {
+export const transitionToBookValidated = async (userId, lendingId) => {
   const query = new ParameterizedQuery(
-    `UPDATE "${schemaName}"."lending" SET "status"=$1 WHERE id=$2 AND user_id=$3`,
-    [status, lendingId, userId],
+    `UPDATE "${schemaName}"."lending" SET "status"='${
+      LENDING_STATUS.BOOK_VALIDATED
+    }' WHERE id=$1 AND user_id=$2 AND status='${LENDING_STATUS.PENDING}'
+    RETURNING borrower_id AS "borrowerId"`,
+    [lendingId, userId],
   );
+  const row = await database.oneOrNone(query);
+  return row;
+};
 
-  await database.none(query);
+export const transitionToConfirmed = async (userId, lendingId) => {
+  const query = new ParameterizedQuery(
+    `UPDATE "${schemaName}"."lending" SET "status"='${
+      LENDING_STATUS.CONFIRMED
+    }' WHERE id=$1 AND user_id=$2 AND status='${LENDING_STATUS.BOOK_VALIDATED}'
+    RETURNING book_id AS "bookId"`,
+    [lendingId, userId],
+  );
+  const row = await database.oneOrNone(query);
+  return row;
 };
 
 export const removeLending = async (userId, lendingId) => {
   const query = new ParameterizedQuery(
-    `DELETE FROM "${schemaName}"."lending" WHERE id=$1 AND user_id=$2`,
+    `DELETE FROM "${schemaName}"."lending" WHERE id=$1 AND user_id=$2
+    RETURNING book_id as "bookId", borrower_id as "borrowerId"`,
     [lendingId, userId],
   );
 
-  await database.none(query);
+  const row = await database.oneOrNone(query);
+  return row;
 };
