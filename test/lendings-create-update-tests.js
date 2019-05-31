@@ -114,13 +114,17 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
     const userId = 'user1';
     const bookId = 'book1';
     const contactId = 'contact1';
+    const bookTitle = 'MyBook1';
 
     const mockMessage = newMockMessage({
       operation: INCOMING_OPERATIONS.VALIDATE_LEND_BOOK,
       lendingId,
       userId,
       bookId,
-      status: LEND_BOOK_VALIDATION_STATUS.BOOK_VALIDATED,
+      result: {
+        status: LEND_BOOK_VALIDATION_STATUS.BOOK_VALIDATED,
+        title: bookTitle,
+      },
     });
 
     await handleMessages(mockMessage);
@@ -137,12 +141,13 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
     sinon.assert.calledOnce(stubSendMessageWithReply);
 
     const lending = await database.one(
-      `SELECT "id", "status" FROM "${schemaName}"."lending" WHERE "id"=$1;`,
+      `SELECT "id", "status", "title" FROM "${schemaName}"."lending" WHERE "id"=$1;`,
       [lendingId],
     );
 
-    const { status } = lending;
+    const { status, title } = lending;
     assert.strictEqual(status, LENDING_STATUS.BOOK_VALIDATED);
+    assert.strictEqual(title, bookTitle);
   });
 
   it('Handles a failed book validation', async () => {
@@ -155,7 +160,10 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
       lendingId,
       userId,
       bookId,
-      status: LEND_BOOK_VALIDATION_STATUS.BOOK_NOT_VALIDATED,
+      result: {
+        status: LEND_BOOK_VALIDATION_STATUS.BOOK_NOT_VALIDATED,
+        title: null,
+      },
     });
 
     await handleMessages(mockMessage);
@@ -176,13 +184,17 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
     const lendingId = '3';
     const userId = 'user1';
     const bookId = 'book3';
+    const borrowerNickname = 'Borrower1';
 
     const mockMessage = newMockMessage({
       operation: INCOMING_OPERATIONS.VALIDATE_BOOK_BORROWER,
       lendingId,
       userId,
       bookId,
-      status: LEND_BOOK_VALIDATION_STATUS.BORROWER_VALIDATED,
+      result: {
+        status: LEND_BOOK_VALIDATION_STATUS.BORROWER_VALIDATED,
+        nickname: borrowerNickname,
+      },
     });
 
     await handleMessages(mockMessage);
@@ -199,12 +211,13 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
     sinon.assert.calledOnce(stubSendMessage);
 
     const lending = await database.one(
-      `SELECT "id", "status" FROM "${schemaName}"."lending" WHERE "id"=$1;`,
+      `SELECT "id", "status", "nickname" FROM "${schemaName}"."lending" WHERE "id"=$1;`,
       [lendingId],
     );
 
-    const { status } = lending;
+    const { status, nickname } = lending;
     assert.strictEqual(status, LENDING_STATUS.CONFIRMED);
+    assert.strictEqual(nickname, borrowerNickname);
   });
 
   it('Handles a failed borrower validation', async () => {
@@ -217,7 +230,10 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
       lendingId,
       userId,
       bookId,
-      status: LEND_BOOK_VALIDATION_STATUS.BORROWER_NOT_VALIDATED,
+      result: {
+        status: LEND_BOOK_VALIDATION_STATUS.BORROWER_NOT_VALIDATED,
+        nickname: null,
+      },
     });
 
     await handleMessages(mockMessage);

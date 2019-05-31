@@ -56,25 +56,25 @@ export const checkLentBook = async (userId, bookId) => {
   return row;
 };
 
-export const transitionToBookValidated = async (userId, lendingId) => {
+export const transitionToBookValidated = async (userId, lendingId, title) => {
   const query = new ParameterizedQuery(
     `UPDATE "${schemaName}"."lending" SET "status"='${
       LENDING_STATUS.BOOK_VALIDATED
-    }' WHERE id=$1 AND user_id=$2 AND status='${LENDING_STATUS.PENDING}'
+    }', "title"=$1 WHERE id=$2 AND user_id=$3 AND status='${LENDING_STATUS.PENDING}'
     RETURNING borrower_id AS "borrowerId"`,
-    [lendingId, userId],
+    [title, lendingId, userId],
   );
   const row = await database.oneOrNone(query);
   return row;
 };
 
-export const transitionToConfirmed = async (userId, lendingId) => {
+export const transitionToConfirmed = async (userId, lendingId, nickname) => {
   const query = new ParameterizedQuery(
     `UPDATE "${schemaName}"."lending" SET "status"='${
       LENDING_STATUS.CONFIRMED
-    }' WHERE id=$1 AND user_id=$2 AND status='${LENDING_STATUS.BOOK_VALIDATED}'
+    }', "nickname"=$1 WHERE id=$2 AND user_id=$3 AND status='${LENDING_STATUS.BOOK_VALIDATED}'
     RETURNING book_id AS "bookId"`,
-    [lendingId, userId],
+    [nickname, lendingId, userId],
   );
   const row = await database.oneOrNone(query);
   return row;

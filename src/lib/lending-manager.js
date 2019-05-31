@@ -38,15 +38,16 @@ export const lendBook = async (userId, lending) => {
 };
 
 export const handleLendBookValidationResult = async validationResult => {
-  const { lendingId, userId, status } = validationResult;
-  logger.info(`Book Validation result: ${status} - lending: ${lendingId} - status: ${status}`);
+  const { lendingId, userId, result } = validationResult;
+  const { status, title } = result;
+  logger.info(`Book Validation result: ${status} - lending: ${lendingId}`);
 
   if (status === LEND_BOOK_VALIDATION_STATUS.BOOK_VALIDATED) {
     // If the book has been validated, request a borrower validation
     // and update the lending status accordingly
-    const result = await transitionToBookValidated(userId, lendingId);
-    if (result) {
-      const { borrowerId } = result;
+    const transitionResult = await transitionToBookValidated(userId, lendingId, title);
+    if (transitionResult) {
+      const { borrowerId } = transitionResult;
       await messaging.validateBorrower(lendingId, userId, borrowerId);
     }
   } else {
@@ -56,24 +57,25 @@ export const handleLendBookValidationResult = async validationResult => {
 };
 
 export const handleBookBorrowerValidationResult = async validationResult => {
-  const { lendingId, userId, status } = validationResult;
-  logger.info(`Book Validation result: ${status} - lending: ${lendingId} - status: ${status}`);
+  const { lendingId, userId, result } = validationResult;
+  const { status, nickname } = result;
+  logger.info(`Book Validation result: ${status} - lending: ${lendingId}`);
   if (status === LEND_BOOK_VALIDATION_STATUS.BORROWER_VALIDATED) {
     // The borrower has been validated
     // - update the status lending status accordingly
     // - send a message to update the book lending status
-    const result = await transitionToConfirmed(userId, lendingId);
-    if (result) {
-      const { bookId } = result;
+    const transitionResult = await transitionToConfirmed(userId, lendingId, nickname);
+    if (transitionResult) {
+      const { bookId } = transitionResult;
       await messaging.confirmBookLending(lendingId, userId, bookId);
     }
   } else {
     // The borrower has not been validated
     // - remove the lending
     // - send a message to update the book lending status
-    const result = await removeLending(userId, lendingId);
-    if (result) {
-      const { bookId } = result;
+    const removeResult = await removeLending(userId, lendingId);
+    if (removeResult) {
+      const { bookId } = removeResult;
       await messaging.cancelBookLending(lendingId, userId, bookId);
     }
   }
