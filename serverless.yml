@@ -19,11 +19,11 @@ custom:
     includeModules:
       forceExclude:
         - aws-sdk
-    packager: 'npm'
+    packager: 'yarn'
 
 provider:
   name: aws
-  runtime: nodejs10.x
+  runtime: nodejs12.x
   versionFunctions: false
   memorySize: 1024
   region: ${self:custom.config.region}
