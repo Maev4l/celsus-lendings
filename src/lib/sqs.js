@@ -1,6 +1,8 @@
 import AWS from 'aws-sdk';
 
-import { logger } from './logger';
+import loggerFactory from './logger';
+
+const logger = loggerFactory.getLogger('sqs');
 
 const LENDINGS_QUEUE = process.env.LENDINGS_QUEUE_URL;
 

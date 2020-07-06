@@ -1,9 +1,10 @@
 import sqs from './sqs';
-import { logger } from './logger';
+import loggerFactory from './logger';
 import { OUTGOING_OPERATIONS } from './utils';
 
 const CORE_QUEUE = process.env.CORE_QUEUE_URL;
 const CONTACTS_QUEUE = process.env.CONTACTS_QUEUE_URL;
+const logger = loggerFactory.getLogger('messaging');
 
 /*
 const sendMessage = ;

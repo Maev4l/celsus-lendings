@@ -1,7 +1,8 @@
 import * as LendingManager from './lib/lending-manager';
-import { logger } from './lib/logger';
+import loggerFactory from './lib/logger';
 import dispatch from './lib/dispatcher';
 
+const logger = loggerFactory.getLogger('api');
 const makeResponse = (statusCode, result) => {
   let body = '';
   if (result) {
@@ -19,7 +20,7 @@ const makeResponse = (statusCode, result) => {
   return response;
 };
 
-export const postLending = async event => {
+export const postLending = async (event) => {
   const lending = JSON.parse(event.body);
   const { sub } = event.requestContext.authorizer.claims;
   let result = '';
@@ -40,7 +41,7 @@ export const postLending = async event => {
  * Handle messages from SQS
  * @param {*} event
  */
-export const handleMessages = async event => {
+export const handleMessages = async (event) => {
   const { Records } = event;
 
   // FIXME: At the current stage, by design, only process 1 event at a time

@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import Joi from 'joi';
 
-import { logger } from './logger';
+import loggerFactory from './logger';
 import CelsusException from './exception';
 import { lendingSchema as schema } from './schemas';
 import {
@@ -14,6 +14,8 @@ import {
 import messaging from './messaging';
 
 import { LENDING_STATUS, LEND_BOOK_VALIDATION_STATUS } from './utils';
+
+const logger = loggerFactory.getLogger('biz');
 
 export const lendBook = async (userId, lending) => {
   const { error } = Joi.validate(lending, schema);
@@ -37,7 +39,7 @@ export const lendBook = async (userId, lending) => {
   return { id };
 };
 
-export const handleLendBookValidationResult = async validationResult => {
+export const handleLendBookValidationResult = async (validationResult) => {
   const { lendingId, userId, result } = validationResult;
   const { status, title } = result;
   logger.info(`Book Validation result: ${status} - lending: ${lendingId}`);
@@ -56,7 +58,7 @@ export const handleLendBookValidationResult = async validationResult => {
   }
 };
 
-export const handleBookBorrowerValidationResult = async validationResult => {
+export const handleBookBorrowerValidationResult = async (validationResult) => {
   const { lendingId, userId, result } = validationResult;
   const { status, nickname } = result;
   logger.info(`Book Validation result: ${status} - lending: ${lendingId}`);
