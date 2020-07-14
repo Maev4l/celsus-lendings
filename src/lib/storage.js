@@ -59,7 +59,7 @@ export const checkLentBook = async (userId, bookId) => {
 export const transitionToBookValidated = async (userId, lendingId, title) => {
   const query = new ParameterizedQuery({
     text: `UPDATE "${schemaName}"."lending" SET "status"='${LENDING_STATUS.BOOK_VALIDATED}', "title"=$1 WHERE id=$2 AND user_id=$3 AND status='${LENDING_STATUS.PENDING}'
-    RETURNING borrower_id AS "borrowerId"`,
+    RETURNING borrower_id AS "borrowerId", book_id AS "bookId"`,
     values: [title, lendingId, userId],
   });
   const row = await database.oneOrNone(query);

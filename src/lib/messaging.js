@@ -23,7 +23,7 @@ const messaging = {
       CORE_QUEUE,
     );
   },
-  validateBorrower: async (lendingId, userId, contactId) => {
+  validateBorrower: async (lendingId, userId, contactId, bookId) => {
     logger.info(`Request borrower validation - lending: ${lendingId} - borrower: ${contactId}`);
     await sqs.sendMessageWithReply(
       {
@@ -31,6 +31,7 @@ const messaging = {
         lendingId,
         userId,
         contactId,
+        bookId,
       },
       CONTACTS_QUEUE,
     );

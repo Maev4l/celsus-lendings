@@ -135,6 +135,7 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
         lendingId,
         userId,
         contactId,
+        bookId,
       },
       CONTACTS_QUEUE,
     );

@@ -49,8 +49,8 @@ export const handleLendBookValidationResult = async (validationResult) => {
     // and update the lending status accordingly
     const transitionResult = await transitionToBookValidated(userId, lendingId, title);
     if (transitionResult) {
-      const { borrowerId } = transitionResult;
-      await messaging.validateBorrower(lendingId, userId, borrowerId);
+      const { borrowerId, bookId } = transitionResult;
+      await messaging.validateBorrower(lendingId, userId, borrowerId, bookId);
     }
   } else {
     // If the book has NOT been validated remove the lending
