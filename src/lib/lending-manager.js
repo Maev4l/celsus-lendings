@@ -1,5 +1,4 @@
 import { v4 as uuidv4 } from 'uuid';
-import Joi from 'joi';
 
 import loggerFactory from './logger';
 import CelsusException from './exception';
@@ -20,7 +19,7 @@ import { LENDING_STATUS, LEND_BOOK_VALIDATION_STATUS } from './utils';
 const logger = loggerFactory.getLogger('biz');
 
 export const lendBook = async (userId, lending) => {
-  const { error } = Joi.validate(lending, schema);
+  const { error } = schema.validate(lending);
   if (error) {
     const { message } = error.details[0];
     throw new CelsusException(message);
