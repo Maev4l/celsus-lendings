@@ -38,6 +38,27 @@ export const postLending = async (event) => {
 };
 
 /**
+ *
+ * Lending deletion means the book has been returned
+ */
+export const deleteLending = async (event) => {
+  const { sub } = event.requestContext.authorizer.claims;
+
+  const lendingId = event.pathParameters.id;
+
+  let statusCode;
+  const lending = await LendingManager.getLending(sub, lendingId);
+  if (!lending) {
+    statusCode = 404;
+  } else {
+    const result = await LendingManager.returnLending(sub, lendingId);
+    statusCode = result ? 204 : 400;
+  }
+
+  return makeResponse(statusCode);
+};
+
+/**
  * Handle messages from SQS
  * @param {*} event
  */

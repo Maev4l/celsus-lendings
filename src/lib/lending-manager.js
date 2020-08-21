@@ -8,6 +8,8 @@ import {
   saveLending,
   removeLending,
   checkLentBook,
+  readLending,
+  transitionToReturned,
   transitionToBookValidated,
   transitionToConfirmed,
 } from './storage';
@@ -37,6 +39,21 @@ export const lendBook = async (userId, lending) => {
   await messaging.validateBook(id, userId, bookId);
 
   return { id };
+};
+
+export const getLending = async (userId, lendingId) => {
+  const lending = await readLending(userId, lendingId);
+  return lending;
+};
+
+export const returnLending = async (userId, lendingId) => {
+  const transitionResult = await transitionToReturned(userId, lendingId);
+  if (transitionResult) {
+    const { bookId, borrowerId: contactId } = transitionResult;
+    await messaging.returnLending(lendingId, userId, contactId, bookId);
+  }
+
+  return transitionResult;
 };
 
 export const handleLendBookValidationResult = async (validationResult) => {

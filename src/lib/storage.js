@@ -12,6 +12,12 @@ const pgp = pgpromise();
  */
 pgp.pg.types.setTypeParser(20 /* int8 */, (val) => parseInt(val, 10));
 
+/**
+ * Returns the raw DATE value from Postgres, otherwise it is returned
+ * as 1 day before the saved value
+ */
+pgp.pg.types.setTypeParser(1082 /* DATE */, (s) => s);
+
 const database = pgp({ capSQL: true });
 
 export const getDatabase = () => database;
@@ -80,6 +86,17 @@ export const removeLending = async (userId, lendingId) => {
   const query = new ParameterizedQuery({
     text: `DELETE FROM "${schemaName}"."lending" WHERE id=$1 AND user_id=$2
     RETURNING book_id as "bookId", borrower_id as "borrowerId"`,
+    values: [lendingId, userId],
+  });
+
+  const row = await database.oneOrNone(query);
+  return row;
+};
+
+export const transitionToReturned = async (userId, lendingId) => {
+  const query = new ParameterizedQuery({
+    text: `UPDATE "${schemaName}"."lending" SET "returned_at" = CURRENT_DATE WHERE id=$1 AND user_id=$2 
+          AND "returned_at" IS NULL AND "status" = '${LENDING_STATUS.CONFIRMED}' RETURNING id, book_id as "bookId", borrower_id as "borrowerId";`,
     values: [lendingId, userId],
   });
 

@@ -1,6 +1,7 @@
 import { assert } from 'chai';
 import dotenv from 'dotenv';
 import sinon from 'sinon';
+import moment from 'moment';
 
 import { newMockEvent, newMockMessage } from './utils';
 import { postLending, handleMessages } from '../src/handler';
@@ -100,10 +101,7 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
     assert.strictEqual(bookId, expectedBookId);
     assert.strictEqual(borrowerId, expectedBorrowerId);
     assert.isNotNull(lentAt);
-    const now = new Date();
-    assert.strictEqual(lentAt.getFullYear(), now.getFullYear());
-    assert.strictEqual(lentAt.getMonth(), now.getMonth());
-    assert.strictEqual(lentAt.getDate(), now.getDate());
+    assert.strictEqual(lentAt, moment().format('YYYY-MM-DD'));
     assert.isNull(returnedAt);
 
     await database.none(`DELETE FROM "${schemaName}"."lending" WHERE "id"=$1`, [id]);
@@ -282,6 +280,11 @@ describe('Lendings Test (CREATE-UPDATE)', async () => {
       [id],
     );
 
+    const [lending] = rows;
+
     assert.strictEqual(rows.length, 1);
+    assert.strictEqual(lending.bookId, 'book6');
+    assert.strictEqual(lending.borrowerId, 'contact1');
+    assert.strictEqual(lending.lentAt, moment().format('YYYY-MM-DD'));
   });
 });

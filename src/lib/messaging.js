@@ -60,6 +60,22 @@ const messaging = {
       CORE_QUEUE,
     );
   },
+
+  returnLending: async (lendingId, userId, contactId, bookId) => {
+    logger.info(
+      `Return book lending - lending: ${lendingId} - book: ${bookId} - contact: ${contactId}`,
+    );
+    const message = {
+      operation: OUTGOING_OPERATIONS.RETURN_LENT_BOOK,
+      lendingId,
+      userId,
+      contactId,
+      bookId,
+    };
+    await sqs.sendMessage(message, CORE_QUEUE);
+
+    await sqs.sendMessage(message, CONTACTS_QUEUE);
+  },
 };
 
 export default messaging;

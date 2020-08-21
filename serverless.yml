@@ -76,6 +76,16 @@ functions:
           cors: true
           authorizer:
             arn: ${self:custom.config.userPoolArn}
+  deleteLending:
+    handler: src/handler.deleteLending
+    name: delete-lending
+    events:
+      - http:
+          path: v1/lendings/{id}
+          method: delete
+          cors: true
+          authorizer:
+            arn: ${self:custom.config.userPoolArn}
   handleMessages:
     handler: src/handler.handleMessages
     name: handle-lendings-messages
