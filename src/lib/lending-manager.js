@@ -8,6 +8,7 @@ import {
   removeLending,
   checkLentBook,
   readLending,
+  listLendings,
   transitionToReturned,
   transitionToBookValidated,
   transitionToConfirmed,
@@ -17,6 +18,29 @@ import messaging from './messaging';
 import { LENDING_STATUS, LEND_BOOK_VALIDATION_STATUS } from './utils';
 
 const logger = loggerFactory.getLogger('biz');
+
+export const LENDINGS_PAGE_SIZE = 5;
+
+export const getLendings = async (userId, offset) => {
+  const { rows, rowCount } = await listLendings(userId, offset, LENDINGS_PAGE_SIZE);
+
+  return {
+    itemsPerPage: LENDINGS_PAGE_SIZE,
+    total: parseInt(rowCount, 10),
+    lendings: rows.map((row) => {
+      const { id, bookId, contactId, status, nickname, title, lentAt } = row;
+      return {
+        id,
+        bookId,
+        contactId,
+        status,
+        nickname,
+        title,
+        lentAt,
+      };
+    }),
+  };
+};
 
 export const lendBook = async (userId, lending) => {
   const { error } = schema.validate(lending);

@@ -66,6 +66,9 @@ package:
     - secrets.txt
 
 functions:
+  getLendings:
+    handler: src/handler.getLendings
+    name: get-lendings
   postLending:
     handler: src/handler.postLending
     name: post-lending

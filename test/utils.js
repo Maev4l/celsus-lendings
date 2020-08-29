@@ -1,3 +1,10 @@
+export const makeMockEvent = (userId, payload) => {
+  return {
+    userId,
+    payload,
+  };
+};
+
 export const newMockEvent = (sub, body, pathParameters, queryStringParameters) => {
   const mockEvent = {
     requestContext: {

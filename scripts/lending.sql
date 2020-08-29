@@ -37,3 +37,8 @@ INSERT INTO "lending" ("id", "user_id", "book_id", "borrower_id", "status", "ret
 
 -- Test for returning a lent book
 INSERT INTO "lending" ("id", "user_id", "book_id", "borrower_id", "status") VALUES ('8', 'user1', 'book8', 'contact1','CONFIRMED');
+
+-- Test for list lendings
+INSERT INTO "lending" ("id", "user_id", "book_id", "title", "borrower_id", "nickname", "status") VALUES ('9', 'user2', 'book8', 'title8', 'contact1', 'nickname1', 'CONFIRMED');
+INSERT INTO "lending" ("id", "user_id", "book_id", "title", "borrower_id", "nickname", "status") VALUES ('10', 'user2', 'book9', 'title9', 'contact2','nickname2', 'PENDING');
+INSERT INTO "lending" ("id", "user_id", "book_id", "title", "borrower_id", "nickname", "status", "returned_at") VALUES ('11', 'user2', 'book10','title10', 'contact3', 'nickname3', 'PENDING', CURRENT_DATE);

@@ -45,6 +45,30 @@ export const readLending = async (userId, lendingId) => {
   return row;
 };
 
+export const listLendings = async (userId, offset, pageSize) => {
+  const query1 = new ParameterizedQuery({
+    text: `SELECT COUNT(*) AS total
+      FROM "${schemaName}"."lending" L
+      WHERE L."user_id"=$1 AND L."returned_at" IS NULL;`,
+    values: [userId],
+  });
+
+  const query2 = new ParameterizedQuery({
+    text: `SELECT L."id", L."book_id" as "bookId", L."status", L."borrower_id" as "contactId",
+    L."lent_at" as "lentAt", L."title", L."nickname"
+    FROM "${schemaName}"."lending" L
+    WHERE L."user_id"=$1 AND L."returned_at" IS NULL ORDER BY L."lent_at" DESC
+    LIMIT ${pageSize} OFFSET ${pageSize * offset};`,
+    values: [userId],
+  });
+
+  return database.task(async (task) => {
+    const { total: rowCount } = await task.one(query1);
+    const rows = await task.any(query2);
+    return { rows, rowCount };
+  });
+};
+
 /**
  * Check if a book is already lent in the local database
  * Meaning the returned_at date is not set

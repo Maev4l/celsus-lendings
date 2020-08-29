@@ -20,6 +20,14 @@ const makeResponse = (statusCode, result) => {
   return response;
 };
 
+export const getLendings = async (event) => {
+  const { userId, payload } = event;
+  const { page } = payload;
+  const offset = page - 1;
+  const result = LendingManager.getLendings(userId, offset);
+  return result;
+};
+
 export const postLending = async (event) => {
   const lending = JSON.parse(event.body);
   const { sub } = event.requestContext.authorizer.claims;
