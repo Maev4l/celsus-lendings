@@ -20,12 +20,7 @@ pipeline {
                             docker.image('node:14-alpine').inside("-u root --privileged --network host -e COVERALLS_GIT_BRANCH=${env.GIT_BRANCH} -e COVERALLS_SERVICE_NAME=internal-jenkins -e COVERALLS_REPO_TOKEN=${COVERALLS_TOKEN}") {
                                 sh 'apk update && apk add --no-cache postgresql-client curl'
                                 sh 'yarn install'
-                                sh '''
-                                while curl -s http://localhost:4566/health | grep -v "\"s3\": \"running\""; do
-                                    printf 'localstack not up\n'
-                                    sleep 10s
-                                done
-                                '''
+                                sh './wait-localstack.sh'
                                 sh 'yarn build:ci'
                                 sh 'yarn coverage'
                             }
