@@ -3,7 +3,7 @@
  * it is more robust to rely on Mocha root hooks to provision and
  * clean up the database after tests
  */
-
+import './config';
 import childProcess from 'child_process';
 
 before('Initialize database', () => {
